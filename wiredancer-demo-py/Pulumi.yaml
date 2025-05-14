@@ -1,0 +1,8 @@
+name: wiredancer-demo-py
+runtime:
+  name: python
+  options:
+    toolchain: pip
+    virtualenv: venv
+    typechecker: pyright
+description: FPGA-accelerated Wiredancer demo
