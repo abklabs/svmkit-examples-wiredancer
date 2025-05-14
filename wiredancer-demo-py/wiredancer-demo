@@ -1,0 +1,101 @@
+#!./opsh
+
+set -euo pipefail
+lib::import ssh
+
+##############################################################################
+# 0. state dir
+##############################################################################
+[[ $# -eq 1 ]] || log::fatal "usage: $0 <statedir>"
+STATEDIR=$1 ; umask 077 ; mkdir -p "$STATEDIR" ; cd "$STATEDIR"
+
+##############################################################################
+# Get host / key from Pulumi outputs
+##############################################################################
+STACK_JSON=stack.json
+log::info "fetching Pulumi outputs -> $STACK_JSON"
+pulumi stack output --show-secrets -j >"$STACK_JSON"
+
+jqget() {
+    jq -r "$1 // empty" <"$STACK_JSON"
+}
+
+HOST=$(   jqget '.nodes_public_ip   | if type=="array" then .[0] else . end')
+PRIVKEY=$(jqget '.nodes_private_key | if type=="array" then .[0] else . end')
+USER=ubuntu
+TMUX_SESSION=frank
+USED=$(lsof -nP -iTCP -sTCP:LISTEN | awk '{print $9}' | sed 's/.*://' | sort -u)
+TUN_PORT=$(comm -23 <(seq 2000 65000) <(printf '%s\n' "$USED") | shuf -n1)
+
+##############################################################################
+# SSH tunnel
+##############################################################################
+log::info "setting up SSH tunnel to $HOST on port ${TUN_PORT}"
+ssh::begin
+printf '%s\n' "$PRIVKEY" | ssh::key::add
+ssh::config <<EOF
+Host *
+     StrictHostKeyChecking no
+     UserKnownHostsFile /dev/null
+EOF
+
+ssh-keygen -R "[localhost]:${TUN_PORT}" 2>/dev/null || true
+
+ssh::background::run -f -T -o ExitOnForwardFailure=yes \
+    -L "${TUN_PORT}:127.0.0.1:22" \
+    "${USER}@${HOST}" "sh -c 'echo goliath online && exec sleep infinity'"
+
+if ! timeout 8 ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+    -q -p "$TUN_PORT" -o BatchMode=yes "${USER}@localhost" true
+then log::fatal "SSH tunnel to $HOST failed"; fi
+
+##############################################################################
+# Run the demo in a tmux session
+##############################################################################
+log::info "creating split-pane tmux session '$TMUX_SESSION'…"
+ssh -o StrictHostKeyChecking=no \
+    -o UserKnownHostsFile=/dev/null \
+    -o LogLevel=ERROR \
+    -T -p "$TUN_PORT" "${USER}@localhost" bash -s <<'EOFSSH'
+set -euo pipefail
+sudo -n true >/dev/null || { echo "need password-less sudo"; exit 1; }
+
+pkill -f wd_frank_mon || true
+pkill -f fd_frank_run || true
+
+sudo chmod 755 /tmp/fd_scripts/*.sh 2>/dev/null || true
+
+sudo /tmp/fd_scripts/load_fpga.sh || {
+    echo "load_fpga.sh failed"
+    exit 1
+}
+
+sudo /tmp/fd_scripts/config_fd.sh || {
+    echo "config_fd.sh failed"
+    exit 1
+}
+
+tmux kill-session -t frank 2>/dev/null || true
+
+tmux new-session  -d  -s frank \
+    "sudo -n /opt/frankendancer/bin/fd_frank_run frank '1-6' || read" \; \
+  split-window  -v \
+    "sudo taskset -c 7 /opt/frankendancer/bin/fd_frank_mon frank --duration 10e12 --dt-min 1e7 --dt-max 1e7 || read" \; \
+  resize-pane   -t frank:0.0 -D 10 \; \
+  select-layout even-vertical
+EOFSSH
+log::info "tmux session ready."
+
+##############################################################################
+# Attach to the tmux session
+##############################################################################
+ssh -o StrictHostKeyChecking=no \
+    -o UserKnownHostsFile=/dev/null \
+    -o LogLevel=ERROR \
+    -t -p "$TUN_PORT" "${USER}@localhost" tmux attach -t "$TMUX_SESSION" || true
+ssh -o StrictHostKeyChecking=no \
+    -o UserKnownHostsFile=/dev/null \
+    -o LogLevel=ERROR \
+    -p "$TUN_PORT" "${USER}@localhost" tmux kill-session -t "$TMUX_SESSION" 2>/dev/null || true
+log::info "cleanly exited tmux session '$TMUX_SESSION'"
+
