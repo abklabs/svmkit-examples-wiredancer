@@ -23,7 +23,7 @@ local_pcap_path = config.get("pcapPath") or "solana.pcap"
 local_pcap_name = os.path.basename(local_pcap_path)
 remote_pcap_path = f"/tmp/{local_pcap_name}"
 
-bitstream_afgi_id = config.get("afgi") or "agfi-04b2f5f86d0176c1b"
+bitstream_afgi_id = config.get("afgi") or "agfi-01a8e8daf41cb7249"
 
 node_config = pulumi.Config("node")
 
