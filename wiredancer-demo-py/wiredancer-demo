@@ -63,18 +63,22 @@ sudo -n true >/dev/null || { echo "need password-less sudo"; exit 1; }
 pkill -f wd_frank_mon || true
 pkill -f fd_frank_run || true
 
-sudo chmod 755 /tmp/fd_scripts/*.sh 2>/dev/null || true
+sudo chmod 755 /home/ubuntu/fd_scripts/*.sh 2>/dev/null || true
 
-sudo /tmp/fd_scripts/load_fpga.sh || {
+sudo /home/ubuntu/fd_scripts/load_fpga.sh || {
     echo "load_fpga.sh failed"
     exit 1
 }
 
-sudo /tmp/fd_scripts/config_fd.sh || {
-    echo "config_fd.sh failed"
+sudo /home/ubuntu/fd_scripts/build_wd_dma.sh || {
+    echo "build_wd_dma.sh failed"
     exit 1
 }
 
+sudo /home/ubuntu/fd_scripts/config_fd.sh || {
+    echo "config_fd.sh failed"
+    exit 1
+}
 tmux kill-session -t frank 2>/dev/null || true
 
 tmux new-session  -d  -s frank \

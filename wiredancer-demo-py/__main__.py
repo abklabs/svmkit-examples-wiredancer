@@ -17,11 +17,11 @@ config = pulumi.Config('demo')
 
 local_deb_path = config.get("debPath") or "wiredancer_demo_amd64.deb"
 local_deb_name = os.path.basename(local_deb_path)
-remote_deb_path = f"/tmp/{local_deb_name}"
+remote_deb_path = f"/home/ubuntu/{local_deb_name}"
 
 local_pcap_path = config.get("pcapPath") or "solana.pcap"
 local_pcap_name = os.path.basename(local_pcap_path)
-remote_pcap_path = f"/tmp/{local_pcap_name}"
+remote_pcap_path = f"/home/ubuntu/{local_pcap_name}"
 
 bitstream_afgi_id = config.get("afgi") or "agfi-01a8e8daf41cb7249"
 
@@ -146,8 +146,9 @@ primary_node = Node("primary")
 # Scripts
 # ─────────────────────────────────────────────────────────────────────────────
 fd_path = "/opt/frankendancer"
-aws_fpga_path = "/tmp/aws-fpga"
-remote_scripts_dir = f"/tmp/fd_scripts"
+aws_fpga_path = "/home/ubuntu/aws_fpga"
+wd_dma_path = "/home/ubuntu/wd_dma"
+remote_scripts_dir = f"/home/ubuntu/fd_scripts"
 
 load_fpga_script = f"""#!/bin/bash
 set -euo pipefail
@@ -168,7 +169,7 @@ sudo {fd_path}/bin/fd_shmem_cfg fini
 sudo {fd_path}/bin/fd_shmem_cfg alloc 32 gigantic 0 alloc 512 huge 0
 sudo {fd_path}/bin/fd_shmem_cfg init 0700 $USER ""
 sudo {fd_path}/bin/fd_shmem_cfg query
-sudo {fd_path}/bin/fd_frank_init_demo frank 1-6 {fd_path} /tmp/solana.pcap 0 0 1 0
+sudo {fd_path}/bin/fd_frank_init_demo frank 1-6 {fd_path} /home/ubuntu/solana.pcap 0 0 1 0
 sudo setpci -s 34:00.0 command=06
 """
 
@@ -188,7 +189,7 @@ push_scripts = command.remote.CopyToRemote(
     "push-scripts",
     connection=primary_node.connection,
     source=script_archive,
-    remote_path="/tmp",
+    remote_path="/home/ubuntu",
     opts=pulumi.ResourceOptions(depends_on=[primary_node.instance]),
 )
 
