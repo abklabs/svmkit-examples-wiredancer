@@ -75,10 +75,16 @@ sudo /home/ubuntu/fd_scripts/build_wd_dma.sh || {
     exit 1
 }
 
+sudo /home/ubuntu/fd_scripts/build_test_wd_dma.sh || {
+    echo "build_test_wd_dma.sh failed"
+    exit 1
+}
+
 sudo /home/ubuntu/fd_scripts/config_fd.sh || {
     echo "config_fd.sh failed"
     exit 1
 }
+
 tmux kill-session -t frank 2>/dev/null || true
 
 tmux new-session -d -s frank \

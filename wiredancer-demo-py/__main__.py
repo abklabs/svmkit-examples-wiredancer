@@ -148,6 +148,7 @@ primary_node = Node("primary")
 fd_path = "/opt/frankendancer"
 aws_fpga_path = "/home/ubuntu/aws_fpga"
 wd_dma_path = "/home/ubuntu/wd_dma"
+test_wd_dma_path = "/home/ubuntu/test_wd_dma"
 remote_scripts_dir = f"/home/ubuntu/fd_scripts"
 
 load_fpga_script = f"""#!/bin/bash
@@ -180,6 +181,17 @@ make V=1
 sudo make install
 """
 
+build_test_wd_dma = f"""#!/bin/bash
+set +u
+source {aws_fpga_path}/sdk_setup.sh
+set -u
+cd {test_wd_dma_path}
+make clean
+make
+sudo make install
+echo 8 | sudo tee /proc/sys/vm/nr_hugepages
+"""
+
 # create temp dir with scripts and archive it
 build_dir   = tempfile.mkdtemp(prefix="fd_pkg_")
 scripts_dir = os.path.join(build_dir, "fd_scripts")
@@ -191,6 +203,8 @@ with open(os.path.join(scripts_dir, "config_fd.sh"), "w") as f:
     f.write(configure_fd_script)
 with open(os.path.join(scripts_dir, "build_wd_dma.sh"), "w") as f:
     f.write(build_wd_dma)
+with open(os.path.join(scripts_dir, "build_test_wd_dma.sh"), "w") as f:
+    f.write(build_test_wd_dma)
 
 script_archive = asset.FileArchive(scripts_dir)
 
@@ -231,6 +245,23 @@ wd_dma_sync = command.remote.Command(
             git -C {wd_dma_path} pull --ff-only
         else
             git clone --depth 1 https://github.com/monological/wd-dma.git {wd_dma_path}
+        fi
+    """,
+    opts=ResourceOptions(depends_on=[primary_node.instance]),
+)
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Clone / update test dma repository
+# ─────────────────────────────────────────────────────────────────────────────
+test_wd_dma_sync = command.remote.Command(
+    "test-wd-dma-sync",
+    connection=primary_node.connection,
+    create=f"""
+        set -euo pipefail
+        if [ -d {test_wd_dma_path}/.git ]; then
+            git -C {test_wd_dma_path} pull --ff-only
+        else
+            git clone --depth 1 https://github.com/monological/test-wd-dma.git {test_wd_dma_path}
         fi
     """,
     opts=ResourceOptions(depends_on=[primary_node.instance]),
