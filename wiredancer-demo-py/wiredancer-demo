@@ -81,12 +81,11 @@ sudo /home/ubuntu/fd_scripts/config_fd.sh || {
 }
 tmux kill-session -t frank 2>/dev/null || true
 
-tmux new-session  -d  -s frank \
+tmux new-session -d -s frank \
     "sudo -n /opt/frankendancer/bin/fd_frank_run frank '1-6' || read" \; \
-  split-window  -v \
+  split-window -v -t frank:0 \
     "sudo taskset -c 7 /opt/frankendancer/bin/fd_frank_mon frank --duration 10e12 --dt-min 1e7 --dt-max 1e7 || read" \; \
-  resize-pane   -t frank:0.0 -D 10 \; \
-  select-layout even-vertical
+  select-pane -t frank:0.0
 EOFSSH
 log::info "tmux session ready."
 
