@@ -173,6 +173,13 @@ sudo {fd_path}/bin/fd_frank_init_demo frank 1-6 {fd_path} /home/ubuntu/solana.pc
 sudo setpci -s 34:00.0 command=06
 """
 
+build_wd_dma = f"""#!/bin/bash
+cd {wd_dma_path}
+make setup
+make V=1
+sudo make install
+"""
+
 # create temp dir with scripts and archive it
 build_dir   = tempfile.mkdtemp(prefix="fd_pkg_")
 scripts_dir = os.path.join(build_dir, "fd_scripts")
@@ -182,6 +189,8 @@ with open(os.path.join(scripts_dir, "load_fpga.sh"), "w") as f:
     f.write(load_fpga_script)
 with open(os.path.join(scripts_dir, "config_fd.sh"), "w") as f:
     f.write(configure_fd_script)
+with open(os.path.join(scripts_dir, "build_wd_dma.sh"), "w") as f:
+    f.write(build_wd_dma)
 
 script_archive = asset.FileArchive(scripts_dir)
 
@@ -205,6 +214,23 @@ aws_fpga_sync = command.remote.Command(
             git -C {aws_fpga_path} pull --ff-only
         else
             git clone --depth 1 https://github.com/aws/aws-fpga.git {aws_fpga_path}
+        fi
+    """,
+    opts=ResourceOptions(depends_on=[primary_node.instance]),
+)
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Clone / update wd_dma repository
+# ─────────────────────────────────────────────────────────────────────────────
+wd_dma_sync = command.remote.Command(
+    "wd-dma-sync",
+    connection=primary_node.connection,
+    create=f"""
+        set -euo pipefail
+        if [ -d {wd_dma_path}/.git ]; then
+            git -C {wd_dma_path} pull --ff-only
+        else
+            git clone --depth 1 https://github.com/monological/wd-dma.git {wd_dma_path}
         fi
     """,
     opts=ResourceOptions(depends_on=[primary_node.instance]),
