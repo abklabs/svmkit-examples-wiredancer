@@ -188,7 +188,6 @@ set -u
 cd {test_wd_dma_path}
 make clean
 make
-sudo make install
 echo 8 | sudo tee /proc/sys/vm/nr_hugepages
 """
 
@@ -250,6 +249,13 @@ wd_dma_sync = command.remote.Command(
     opts=ResourceOptions(depends_on=[primary_node.instance]),
 )
 
+install_wd_dma = command.remote.Command(
+    "install-wd-dma",
+    connection=primary_node.connection,
+    create=f"cd {scripts_dir} && sudo ./build_wd_dma.sh",
+    opts=pulumi.ResourceOptions(depends_on=[aws_fpga_sync, wd_dma_sync]),
+)
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Clone / update test dma repository
 # ─────────────────────────────────────────────────────────────────────────────
@@ -265,6 +271,13 @@ test_wd_dma_sync = command.remote.Command(
         fi
     """,
     opts=ResourceOptions(depends_on=[primary_node.instance]),
+)
+
+build_test_wd_dma = command.remote.Command(
+    "build-test-wd-dma",
+    connection=primary_node.connection,
+    create=f"cd {scripts_dir} && sudo ./build_test_wd_dma.sh",
+    opts=pulumi.ResourceOptions(depends_on=[aws_fpga_sync, install_wd_dma, test_wd_dma_sync]),
 )
 
 # ─────────────────────────────────────────────────────────────────────────────
