@@ -146,6 +146,8 @@ primary_node = Node("primary")
 # Scripts
 # ─────────────────────────────────────────────────────────────────────────────
 fd_path = "/opt/frankendancer"
+firedancer_path = "/home/ubuntu/firedancer"
+firedancer_branch = "milestone-1.4-demo-abk-mcache"
 aws_fpga_path = "/home/ubuntu/aws_fpga"
 wd_dma_path = "/home/ubuntu/wd_dma"
 test_wd_dma_path = "/home/ubuntu/test_wd_dma"
@@ -188,7 +190,6 @@ set -u
 cd {test_wd_dma_path}
 make clean
 make
-echo 8 | sudo tee /proc/sys/vm/nr_hugepages
 """
 
 # create temp dir with scripts and archive it
@@ -213,6 +214,13 @@ push_scripts = command.remote.CopyToRemote(
     source=script_archive,
     remote_path="/home/ubuntu",
     opts=pulumi.ResourceOptions(depends_on=[primary_node.instance]),
+)
+
+chmod_scripts = command.remote.Command(
+    "chmod-scripts",
+    connection=primary_node.connection,
+    create=f"chmod +x {remote_scripts_dir}/*.sh",
+    opts=pulumi.ResourceOptions(depends_on=[push_scripts]),
 )
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -252,13 +260,30 @@ wd_dma_sync = command.remote.Command(
 install_wd_dma = command.remote.Command(
     "install-wd-dma",
     connection=primary_node.connection,
-    create=f"cd {scripts_dir} && sudo ./build_wd_dma.sh",
-    opts=pulumi.ResourceOptions(depends_on=[aws_fpga_sync, wd_dma_sync]),
+    create=f"sudo {remote_scripts_dir}/build_wd_dma.sh",
+    opts=pulumi.ResourceOptions(depends_on=[aws_fpga_sync, chmod_scripts, wd_dma_sync]),
 )
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Clone / update test dma repository
 # ─────────────────────────────────────────────────────────────────────────────
+
+firedancer_sync = command.remote.Command(
+    "firedancer-sync",
+    connection=primary_node.connection,
+    create=f"""
+        set -euo pipefail
+        if [ -d {firedancer_path}/.git ]; then
+            git -C {firedancer_path} fetch origin {firedancer_branch}
+            git -C {firedancer_path} checkout {firedancer_branch}
+            git -C {firedancer_path} pull --ff-only
+        else
+            git clone --depth 1 --branch {firedancer_branch} https://github.com/monological/firedancer.git {firedancer_path}
+        fi
+    """,
+    opts=ResourceOptions(depends_on=[primary_node.instance]),
+)
+
 test_wd_dma_sync = command.remote.Command(
     "test-wd-dma-sync",
     connection=primary_node.connection,
@@ -276,8 +301,8 @@ test_wd_dma_sync = command.remote.Command(
 build_test_wd_dma = command.remote.Command(
     "build-test-wd-dma",
     connection=primary_node.connection,
-    create=f"cd {scripts_dir} && sudo ./build_test_wd_dma.sh",
-    opts=pulumi.ResourceOptions(depends_on=[aws_fpga_sync, install_wd_dma, test_wd_dma_sync]),
+    create=f"sudo {remote_scripts_dir}/build_test_wd_dma.sh",
+    opts=pulumi.ResourceOptions(depends_on=[aws_fpga_sync, chmod_scripts, firedancer_sync, test_wd_dma_sync]),
 )
 
 # ─────────────────────────────────────────────────────────────────────────────
