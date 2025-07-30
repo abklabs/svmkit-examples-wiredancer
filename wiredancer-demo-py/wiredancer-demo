@@ -70,11 +70,6 @@ sudo /home/ubuntu/fd_scripts/load_fpga.sh || {
     exit 1
 }
 
-sudo /home/ubuntu/fd_scripts/build_wd_dma.sh || {
-    echo "build_wd_dma.sh failed"
-    exit 1
-}
-
 sudo /home/ubuntu/fd_scripts/build_test_wd_dma.sh || {
     echo "build_test_wd_dma.sh failed"
     exit 1

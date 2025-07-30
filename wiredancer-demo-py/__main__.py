@@ -176,13 +176,6 @@ sudo {fd_path}/bin/fd_frank_init_demo frank 1-6 {fd_path} /home/ubuntu/solana.pc
 sudo setpci -s 34:00.0 command=06
 """
 
-build_wd_dma = f"""#!/bin/bash
-cd {wd_dma_path}
-make setup
-make V=1
-sudo make install
-"""
-
 build_test_wd_dma = f"""#!/bin/bash
 set +u
 source {aws_fpga_path}/sdk_setup.sh
@@ -201,8 +194,6 @@ with open(os.path.join(scripts_dir, "load_fpga.sh"), "w") as f:
     f.write(load_fpga_script)
 with open(os.path.join(scripts_dir, "config_fd.sh"), "w") as f:
     f.write(configure_fd_script)
-with open(os.path.join(scripts_dir, "build_wd_dma.sh"), "w") as f:
-    f.write(build_wd_dma)
 with open(os.path.join(scripts_dir, "build_test_wd_dma.sh"), "w") as f:
     f.write(build_test_wd_dma)
 
@@ -238,30 +229,6 @@ aws_fpga_sync = command.remote.Command(
         fi
     """,
     opts=ResourceOptions(depends_on=[primary_node.instance]),
-)
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Clone / update wd_dma repository
-# ─────────────────────────────────────────────────────────────────────────────
-wd_dma_sync = command.remote.Command(
-    "wd-dma-sync",
-    connection=primary_node.connection,
-    create=f"""
-        set -euo pipefail
-        if [ -d {wd_dma_path}/.git ]; then
-            git -C {wd_dma_path} pull --ff-only
-        else
-            git clone --depth 1 https://github.com/monological/wd-dma.git {wd_dma_path}
-        fi
-    """,
-    opts=ResourceOptions(depends_on=[primary_node.instance]),
-)
-
-install_wd_dma = command.remote.Command(
-    "install-wd-dma",
-    connection=primary_node.connection,
-    create=f"sudo {remote_scripts_dir}/build_wd_dma.sh",
-    opts=pulumi.ResourceOptions(depends_on=[aws_fpga_sync, chmod_scripts, wd_dma_sync]),
 )
 
 # ─────────────────────────────────────────────────────────────────────────────
