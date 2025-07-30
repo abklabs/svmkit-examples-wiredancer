@@ -78,7 +78,7 @@ ami = aws.ec2.get_ami(
     most_recent = True,
     filters = [
         {"name": "name",
-         "values": ["FPGA Developer AMI (Ubuntu) - 1.16.0*"]},
+         "values": ["FPGA Developer AMI (Ubuntu) - 1.16.1*"]},
         {"name": "architecture",
          "values": [instance_arch]},
     ],
