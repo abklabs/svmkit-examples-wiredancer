@@ -161,6 +161,7 @@ set -u
 sudo fpga-clear-local-image -S 0
 sudo fpga-load-local-image -S 0 -I {bitstream_afgi_id}
 sudo fpga-describe-local-image -S 0
+sudo setpci -s 34:00.0 command=06
 """
 
 configure_fd_script = f"""#!/bin/bash
