@@ -72,7 +72,10 @@ mkdir -p wiredancer-demo-state
 ```
 
 This will set up a tmux session that runs the Wiredancer demo and monitor
-application in two separate panes.
+application in two separate panes:
+
+![An animated GIF of the demo output](./media/wiredancer-demo-output.gif)
+
 
 To exit the tmux session, press `ctrl+b` and then `d`.
 
