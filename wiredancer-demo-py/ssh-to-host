@@ -1,4 +1,4 @@
-#!opsh
+#!/usr/bin/env ./opsh
 # shellcheck shell=bash
 
 check_pulumi_yaml() {
