@@ -266,13 +266,6 @@ test_wd_dma_sync = command.remote.Command(
     opts=ResourceOptions(depends_on=[primary_node.instance]),
 )
 
-build_test_wd_dma = command.remote.Command(
-    "build-test-wd-dma",
-    connection=primary_node.connection,
-    create=f"sudo {remote_scripts_dir}/build_test_wd_dma.sh",
-    opts=pulumi.ResourceOptions(depends_on=[aws_fpga_sync, chmod_scripts, firedancer_sync, test_wd_dma_sync]),
-)
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Copy assets and install dependencies
 # ─────────────────────────────────────────────────────────────────────────────
@@ -297,6 +290,17 @@ push_pcap = command.remote.CopyToRemote(
     source=asset.FileAsset(local_pcap_path),
     remote_path=remote_pcap_path,
     opts=ResourceOptions(depends_on=[primary_node.instance]),
+)
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Build test-wd-dma
+# ─────────────────────────────────────────────────────────────────────────────
+
+build_test_wd_dma = command.remote.Command(
+    "build-test-wd-dma",
+    connection=primary_node.connection,
+    create=f"sudo {remote_scripts_dir}/build_test_wd_dma.sh",
+    opts=pulumi.ResourceOptions(depends_on=[aws_fpga_sync, chmod_scripts, firedancer_sync, test_wd_dma_sync, install_deb]),
 )
 
 # ─────────────────────────────────────────────────────────────────────────────
