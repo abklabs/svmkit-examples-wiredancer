@@ -26,19 +26,19 @@ This example shows how to use Pulumi to deploy Wiredancer on AWS.
 2. Navigate to the example directory:
 
 ```
-% cd wiredancer-demo-py
+cd wiredancer-demo-py
 ```
 
 3. Run `pulumi install`; this will install all of the required pieces for this example.
 
 ```
-% pulumi install
+pulumi install
 ```
 
 4. Create and select a Pulumi stack
 
 ```
-% pulumi stack init wiredancer-demo-py
+pulumi stack init wiredancer-demo-py
 ```
 
 5. Set pulumi config
@@ -61,14 +61,14 @@ defaults):
 6. Run `pulumi up`
 
 ```
-% pulumi up
+pulumi up
 ```
 
 7. Run the demo
 
 ```
-% mkdir -p wiredancer-demo-state
-% ./wiredancer-demo wiredancer-demo-state
+mkdir -p wiredancer-demo-state
+./wiredancer-demo wiredancer-demo-state
 ```
 
 This will set up a tmux session that runs the Wiredancer demo and monitor
@@ -79,7 +79,7 @@ To exit the tmux session, press `ctrl+b` and then `d`.
 8. Tear down the example
 
 ```bash
-% pulumi down
+pulumi down
 ```
 
 ## How to build a Wiredancer Debian package (optional)
@@ -96,36 +96,36 @@ follow these steps:
 2. Set up sandbox:
 
 ```
-% mkdir ~/wiredancer-demo
-% cd ~/wiredancer-demo
+mkdir ~/wiredancer-demo
+cd ~/wiredancer-demo
 ```
 
 3. Clone the Firedancer repo:
 
 ```
-% git clone https://github.com/abklabs/firedancer firedancer
+git clone https://github.com/abklabs/firedancer firedancer
 ```
 
 4. Clone and set up the SVMKit repo:
 
 ```
-% git clone https://github.com/abklabs/svmkit svmkit
-% cd svmkit
-% make setup
+git clone https://github.com/abklabs/svmkit svmkit
+cd svmkit
+make setup
 ```
 
 5. Build the svmkit cli and install it:
 
 ```
-% cd cmd/svmkit
-% go install
+cd cmd/svmkit
+go install
 ```
 
 6. Build the Wiredancer Debian package:
 
 ```
-% cd ~/wiredancer-demo/firedancer
-% ../svmkit/build/wiredancer-build
+cd ~/wiredancer-demo/firedancer
+../svmkit/build/wiredancer-build
 ```
 
 This will dump out a Debian package in the `~/wiredancer-demo/firedancer` directory.
