@@ -20,7 +20,8 @@ This example shows how to use Pulumi to deploy Wiredancer on AWS.
 
 1. Have `pulumi` installed, logged in to wherever you're storing state, and configured to work with AWS.
 
-- Please see PULUMI-AWS.md for more information on how to set up your environment.
+- https://www.pulumi.com/docs/iac/download-install/
+- https://www.pulumi.com/docs/iac/get-started/aws/configure/
 
 2. Navigate to the example directory:
 
