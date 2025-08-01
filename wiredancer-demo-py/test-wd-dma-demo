@@ -1,4 +1,4 @@
-#!./opsh
+#!/usr/bin/env ./opsh
 
 set -euo pipefail
 lib::import ssh
