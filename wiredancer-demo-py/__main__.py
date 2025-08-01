@@ -287,7 +287,7 @@ push_deb = command.remote.CopyToRemote(
 install_deb = command.remote.Command(
     "install-deb",
     connection=primary_node.connection,
-    create=f"sudo dpkg -i {remote_deb_path} && sudo apt-get -y -f install",
+    create=f"sudo apt-get -y update && sudo dpkg -i {remote_deb_path} && sudo apt-get -y -f install",
     opts=pulumi.ResourceOptions(depends_on=[push_deb]),
 )
 
