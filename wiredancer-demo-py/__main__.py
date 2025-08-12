@@ -155,6 +155,7 @@ remote_scripts_dir = f"/home/ubuntu/fd_scripts"
 
 load_fpga_script = f"""#!/bin/bash
 set -euo pipefail
+sudo apt update
 set +u
 source {aws_fpga_path}/sdk_setup.sh
 set -u
@@ -165,6 +166,7 @@ sudo setpci -s 34:00.0 command=06
 """
 
 configure_fd_script = f"""#!/bin/bash
+sudo apt update
 set +u
 source {aws_fpga_path}/sdk_setup.sh
 set -u
